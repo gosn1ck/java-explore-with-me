@@ -1,0 +1,18 @@
+server:
+  port: 9090
+
+spring:
+   application:
+     name: stats
+   datasource:
+     username: ${SPRING_DATASOURCE_USERNAME}
+     password: ${SPRING_DATASOURCE_PASSWORD}
+     url: ${SPRING_DATASOURCE_URL}
+   jpa:
+     properties:
+       hibernate:
+         dialect: org.hibernate.dialect.PostgreSQLDialect
+         format_sql: 'true'
+     show-sql: true
+     hibernate:
+       ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO}
