@@ -4,8 +4,9 @@ services:
     image: postgres:14-alpine
     container_name: 'ewm-db'
     environment:
-      POSTGRES_USER: ewm
-      POSTGRES_PASSWORD: ewm
+      - POSTGRES_USER=ewm
+      - POSTGRES_PASSWORD=ewm
+      - POSTGRES_DB=ewm
     ports:
       - "5433:5432"
 
@@ -13,8 +14,9 @@ services:
     image: postgres:14-alpine
     container_name: 'stats-db'
     environment:
-      POSTGRES_USER: stats
-      POSTGRES_PASSWORD: stats
+      - POSTGRES_USER=stats
+      - POSTGRES_PASSWORD=stats
+      - POSTGRES_DB=stats
     ports:
       - "5432:5432"
 
