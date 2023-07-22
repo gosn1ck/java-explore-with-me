@@ -1,5 +1,23 @@
 version: '3.1'
 services:
+  ewm-db:
+    image: postgres:14-alpine
+    container_name: 'ewm-db'
+    environment:
+      POSTGRES_USER: ewm
+      POSTGRES_PASSWORD: ewm
+    ports:
+      - "5433:5432"
+
+  stats-db:
+    image: postgres:14-alpine
+    container_name: 'stats-db'
+    environment:
+      POSTGRES_USER: stats
+      POSTGRES_PASSWORD: stats
+    ports:
+      - "5432:5432"
+
   stats-server:
     build: stats/service
     image: stats
@@ -14,21 +32,13 @@ services:
     ports:
       - "9090:9090"
 
-  stats-db:
-    image: postgres:14-alpine
-    container_name: 'stats-db'
-    environment:
-      POSTGRES_USER: stats
-      POSTGRES_PASSWORD: stats
-    ports:
-      - "5432:5432"
-
   ewm-service:
     build: ewm
     image: ewm
     container_name: 'ewm-server'
     depends_on:
       - ewm-db
+      - stats-server
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://ewm-db:5433/ewm
       - SPRING_DATASOURCE_USERNAME=ewm
@@ -36,12 +46,3 @@ services:
       - SPRING_JPA_HIBERNATE_DDL_AUTO=update
     ports:
       - "8080:8080"
-
-  ewm-db:
-    image: postgres:14-alpine
-    container_name: 'ewm-db'
-    environment:
-      POSTGRES_USER: ewm
-      POSTGRES_PASSWORD: ewm
-    ports:
-      - "5433:5432"
