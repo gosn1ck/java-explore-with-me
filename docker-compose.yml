@@ -20,7 +20,6 @@ services:
     environment:
       POSTGRES_USER: stats
       POSTGRES_PASSWORD: stats
-      PGDATA: /data/postgres
     ports:
       - "5432:5432"
 
