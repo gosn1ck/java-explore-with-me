@@ -11,10 +11,7 @@ import ru.practicum.stats.repository.HitRepository;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-
-import static java.lang.Boolean.TRUE;
 
 @Service
 @RequiredArgsConstructor
@@ -29,34 +26,25 @@ public class HitService {
         return hitRepository.save(hit);
     }
 
+    @Transactional(readOnly = true)
     public List<StatsResponse> getStats(LocalDateTime start, LocalDateTime end, List<String> uris, Boolean unique) {
-        var list = new ArrayList<Hit>();
-        if (uris == null) {
-            list.addAll(hitRepository.findAllByTimestampBetween(start, end));
-        } else {
-            list.addAll(hitRepository.findAllByTimestampBetweenAndUriIsIn(start, end, uris));
+        int mode = (uris != null ? 1 : 0) | (unique != null ? 2 : 0);
+        var list = new ArrayList<StatsResponse>();
+        switch (mode) {
+            case 0:
+                list.addAll(hitRepository.findAllByTimestampBetweenNotUniqueIp(start, end));
+                break;
+            case 1:
+                list.addAll(hitRepository.findAllByTimestampBetweenNotUniqueIpAndUriIsIn(start, end, uris));
+                break;
+            case 2:
+                list.addAll(hitRepository.findAllByTimestampBetweenUniqueIp(start, end));
+                break;
+            case 3:
+                list.addAll(hitRepository.findAllByTimestampBetweenUniqueIpAndUriIsIn(start, end, uris));
+                break;
         }
-        return mapToStats(list, unique);
+        return list;
     }
 
-    private List<StatsResponse> mapToStats(ArrayList<Hit> hits, Boolean unique) {
-        var statMap = new HashMap<String, StatsResponse>();
-        var uniqueIps = new HashMap<StatsResponse, List<String>>();
-
-        for (Hit hit : hits) {
-            var stat = statMap.getOrDefault(hit.getUri(), new StatsResponse(hit.getApp(), hit.getUri(), 0));
-            if (unique == TRUE) {
-                var ips = uniqueIps.getOrDefault(stat, new ArrayList<>());
-                if (!ips.contains(hit.getIp())) {
-                    ips.add(hit.getIp());
-                    stat.setHits(stat.getHits() + 1);
-                }
-                uniqueIps.put(stat, ips);
-            } else {
-                stat.setHits(stat.getHits() + 1);
-            }
-            statMap.put(hit.getUri(), stat);
-        }
-        return new ArrayList<>(statMap.values());
-    }
 }
