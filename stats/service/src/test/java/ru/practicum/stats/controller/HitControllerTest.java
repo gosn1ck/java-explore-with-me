@@ -58,8 +58,15 @@ class HitControllerTest {
     }
 
     @Test
-    @DisplayName("Ручка создания ")
-    void shouldNotCreateHit() {
+    @DisplayName("Ручка создания в случае не валидного dto возвращает 400")
+    void shouldNotCreateHit() throws Exception {
+        var dto = getDto();
+        dto.setUri(null);
+
+        mvc.perform(post(END_POINT_PATH)
+                        .contentType(APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isBadRequest());
 
     }
 
