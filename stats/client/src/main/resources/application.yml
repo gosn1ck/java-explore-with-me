@@ -1,0 +1,4 @@
+feign:
+  url:
+    hit: http://localhost:9090/hit
+    stats: http://localhost:9090/stats
