@@ -41,9 +41,9 @@ public class AdminUserController {
 
     @PostMapping(consumes = "application/json")
     @ResponseStatus(HttpStatus.CREATED)
-    public ResponseEntity<UserResponse> add(@Valid @RequestBody UserDto userDto) {
-        log.info("New user registration {}", userDto);
-        var savedUser = userService.add(userDto);
+    public ResponseEntity<UserResponse> add(@Valid @RequestBody UserDto dto) {
+        log.info("New user registration {}", dto);
+        var savedUser = userService.add(dto);
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{id}")
                 .buildAndExpand(savedUser.getId()).toUri();

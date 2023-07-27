@@ -5,6 +5,7 @@ import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 import ru.practicum.ewm.dto.UserDto;
 import ru.practicum.ewm.dto.UserResponse;
+import ru.practicum.ewm.dto.UserShortResponse;
 import ru.practicum.ewm.model.User;
 
 @Mapper(componentModel = "spring", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
@@ -14,5 +15,7 @@ public interface UserMapper {
     void updateEntity(@MappingTarget User entity, UserDto dto);
 
     UserResponse entityToUserResponse(User user);
+
+    UserShortResponse entityToUserShortResponse(User user);
 
 }
