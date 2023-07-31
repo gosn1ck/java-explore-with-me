@@ -4,6 +4,7 @@ import lombok.*;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.Set;
 
 import static javax.persistence.CascadeType.ALL;
 import static javax.persistence.FetchType.LAZY;
@@ -48,7 +49,6 @@ public class Event {
     @Column(name = "published_on")
     private LocalDateTime publishedOn;
 
-    @Embedded
     @Column(name = "location", nullable = false)
     private Location location;
 
@@ -71,5 +71,8 @@ public class Event {
     @Enumerated(EnumType.STRING)
     @Column(name = "state")
     private EventState state;
+
+    @ManyToMany(mappedBy = "events")
+    private Set<Compilation> compilations;
 
 }

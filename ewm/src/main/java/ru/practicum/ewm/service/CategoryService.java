@@ -60,7 +60,7 @@ public class CategoryService {
         categoryRepository.deleteById(id);
     }
 
-    private Category getCategory(Long id) {
+    public Category getCategory(Long id) {
         return categoryRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("category with id %d not found", id));
     }

@@ -33,7 +33,7 @@ public class UserEventsController {
             @RequestParam(defaultValue = "10")
             @Min(value = 1, message = "minimum value for size param is 1") Integer size) {
         log.info("Get events of userId {} events, from {}, size {}", userId, from, size);
-        var events = eventService.getAll(userId, from, size);
+        var events = eventService.getAllByInitiator(userId, from, size);
         return ResponseEntity.ok(
                 events.stream().map(eventMapper::entityToEventShortDto).collect(Collectors.toList()));
     }
@@ -69,7 +69,5 @@ public class UserEventsController {
         return ResponseEntity.created(location)
                 .body(eventMapper.entityToEventFullDto(savedEvent));
     }
-
-
 
 }

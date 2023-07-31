@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
@@ -47,6 +48,16 @@ public class ApiExceptionHandler {
         String errorMessage = String.format("'%s' should be a valid '%s' and '%s' isn't",
                 name, type, value);
 
+        ApiException exception = new ApiException(BAD_REQUEST, errorMessage, ZonedDateTime.now());
+
+        return new ResponseEntity<>(exception, BAD_REQUEST);
+    }
+
+    @ExceptionHandler(value = MissingServletRequestParameterException.class)
+    public ResponseEntity<ApiException> handleMissingParams(MissingServletRequestParameterException e) {
+        log.error(e.getMessage(), e);
+        String name = e.getParameterName();
+        String errorMessage = name + " parameter is missing";
         ApiException exception = new ApiException(BAD_REQUEST, errorMessage, ZonedDateTime.now());
 
         return new ResponseEntity<>(exception, BAD_REQUEST);

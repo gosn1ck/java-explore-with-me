@@ -6,10 +6,12 @@ import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 import ru.practicum.ewm.dto.*;
 import ru.practicum.ewm.model.Event;
+import ru.practicum.ewm.service.CategoryService;
 
+import static org.mapstruct.NullValuePropertyMappingStrategy.IGNORE;
 import static ru.practicum.ewm.util.Constants.DATE_FORMAT;
 
-@Mapper(componentModel = "spring", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+@Mapper(componentModel = "spring", nullValuePropertyMappingStrategy = IGNORE, uses = {CategoryService.class})
 public interface EventMapper {
 
     @Mapping(target = "category", ignore = true)
@@ -17,6 +19,8 @@ public interface EventMapper {
     Event dtoToEntity(NewEventDto dto);
 
     void updateEntity(@MappingTarget Event entity, UpdateEventUserRequest dto);
+
+    void updateEntity(@MappingTarget Event entity, UpdateEventAdminRequest dto);
 
     EventFullDto entityToEventFullDto(Event event);
 

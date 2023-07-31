@@ -32,7 +32,7 @@ public class AdminUserController {
             @Min(value = 0, message = "minimum value for from param is 0") Integer from,
             @RequestParam(defaultValue = "10")
             @Min(value = 1, message = "minimum value for size param is 1") Integer size,
-            @RequestParam(value = "ids", required = false) List<Integer> ids) {
+            @RequestParam(value = "ids", required = false) List<Long> ids) {
         log.info("Get all users, from {}, size {}, ids {}", from, size, ids);
         var users = userService.getAll(from, size, ids);
         return ResponseEntity.ok(

@@ -12,7 +12,7 @@ import ru.practicum.ewm.validator.ValidDateTimeFormat;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@EventDate
+//@EventDate
 public class UpdateEventUserRequest {
     private String annotation;
     private Long category;
@@ -25,5 +25,4 @@ public class UpdateEventUserRequest {
     private Boolean requestModeration;
     private String title;
     private StateActions stateAction;
-
 }

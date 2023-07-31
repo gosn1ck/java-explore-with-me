@@ -32,7 +32,7 @@ public class UserService {
 
     }
 
-    public List<User> getAll(Integer from, Integer size, List<Integer> ids) {
+    public List<User> getAll(Integer from, Integer size, List<Long> ids) {
         var page = PageRequest.of(from / size, size);
         if (ids == null) {
             return userRepository.findAll(page).toList();
