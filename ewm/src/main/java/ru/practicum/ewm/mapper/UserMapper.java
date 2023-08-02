@@ -8,7 +8,9 @@ import ru.practicum.ewm.dto.UserResponse;
 import ru.practicum.ewm.dto.UserShortResponse;
 import ru.practicum.ewm.model.User;
 
-@Mapper(componentModel = "spring", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+import static org.mapstruct.NullValuePropertyMappingStrategy.IGNORE;
+
+@Mapper(componentModel = "spring", nullValuePropertyMappingStrategy = IGNORE)
 public interface UserMapper {
     User dtoToEntity(UserDto dto);
 

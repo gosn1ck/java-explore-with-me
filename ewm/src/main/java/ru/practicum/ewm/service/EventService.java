@@ -2,6 +2,7 @@ package ru.practicum.ewm.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.dto.NewEventDto;
@@ -11,17 +12,17 @@ import ru.practicum.ewm.exception.BadRequestException;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.mapper.EventMapper;
 import ru.practicum.ewm.model.Event;
+import ru.practicum.ewm.model.EventSorts;
 import ru.practicum.ewm.model.EventState;
 import ru.practicum.ewm.repository.CategoryRepository;
 import ru.practicum.ewm.repository.EventRepository;
 import ru.practicum.ewm.repository.UserRepository;
+import ru.practicum.ewm.specification.EventSpecification;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
+import static ru.practicum.ewm.model.EventSorts.VIEWS;
 import static ru.practicum.ewm.model.EventState.PENDING;
 import static ru.practicum.ewm.model.EventState.PUBLISHED;
 
@@ -46,6 +47,7 @@ public class EventService {
 
         int mode = (userIds != null ? 1 : 0) | (states != null ? 2 : 0) | (categoryIds != null ? 4 : 0);
         var list = new ArrayList<Event>();
+        // todo переделать на спеки
         switch (mode) {
             case 0:
                 list.addAll(eventRepository.findAll(page).toList());
@@ -73,8 +75,24 @@ public class EventService {
                 break;
         }
         return list;
+    }
 
+    @Transactional(readOnly = true)
+    public List<Event> getAllPublic(Integer from, Integer size, String text, List<Long> categoryIds, Boolean paid,
+                                    LocalDateTime rangeStart, LocalDateTime rangeEnd, Boolean onlyAvailable,
+                                    EventSorts sort) {
+        PageRequest page = pageByEventSort(from, size, sort);
+        var categories = categoryRepository.findAllByIdIn(categoryIds);
+        var list = new ArrayList<Event>();
 
+        if (rangeStart == null || rangeEnd == null) {
+            list.addAll(eventRepository.findAll(EventSpecification.publicSearchWithoutRange(text, categories, paid,
+                    onlyAvailable), page).toList());
+        } else {
+            list.addAll(eventRepository.findAll(EventSpecification.publicSearchWithRange(text,
+                    categories, paid, onlyAvailable, rangeStart, rangeEnd), page).toList());
+        }
+        return list;
     }
 
     @Transactional(readOnly = true)
@@ -132,6 +150,7 @@ public class EventService {
         return eventRepository.save(event);
     }
 
+    @Transactional(readOnly = true)
     public Set<Event> getEvents(Set<Long> ids) {
         if (ids == null) {
             return new HashSet<>();
@@ -143,9 +162,21 @@ public class EventService {
         return events;
     }
 
+    public Optional<Event> findById(Long id) {
+        return Optional.of(getEvent(id));
+    }
+
     private Event getEvent(Long id) {
         return eventRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("event with id %d not found", id));
+    }
+
+    private PageRequest pageByEventSort(Integer from, Integer size, EventSorts sort) {
+        if (sort.equals(VIEWS)) {
+            return PageRequest.of(from / size, size, Sort.by("views"));
+        } else {
+            return PageRequest.of(from / size, size, Sort.by("eventDate"));
+        }
     }
 
 //    private User getUser(Long id) {

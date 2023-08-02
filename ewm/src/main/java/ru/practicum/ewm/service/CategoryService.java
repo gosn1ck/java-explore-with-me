@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.dto.CategoryDto;
@@ -46,11 +47,13 @@ public class CategoryService {
         }
     }
 
+    @Transactional(readOnly = true)
     public List<Category> getAll(Integer from, Integer size) {
-        var page = PageRequest.of(from / size, size);
+        var page = PageRequest.of(from / size, size, Sort.by("id"));
         return categoryRepository.findAll(page).toList();
     }
 
+    @Transactional(readOnly = true)
     public Optional<Category> findById(Long id) {
         return Optional.of(getCategory(id));
     }

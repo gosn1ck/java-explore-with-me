@@ -3,6 +3,7 @@ package ru.practicum.ewm.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.dto.UserDto;
@@ -32,8 +33,9 @@ public class UserService {
 
     }
 
+    @Transactional(readOnly = true)
     public List<User> getAll(Integer from, Integer size, List<Long> ids) {
-        var page = PageRequest.of(from / size, size);
+        var page = PageRequest.of(from / size, size, Sort.by("id"));
         if (ids == null) {
             return userRepository.findAll(page).toList();
         } else {

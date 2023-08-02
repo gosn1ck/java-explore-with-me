@@ -7,7 +7,9 @@ import ru.practicum.ewm.dto.CategoryDto;
 import ru.practicum.ewm.dto.CategoryResponse;
 import ru.practicum.ewm.model.Category;
 
-@Mapper(componentModel = "spring", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+import static org.mapstruct.NullValuePropertyMappingStrategy.IGNORE;
+
+@Mapper(componentModel = "spring", nullValuePropertyMappingStrategy = IGNORE)
 public interface CategoryMapper {
 
     Category dtoToEntity(CategoryDto dto);

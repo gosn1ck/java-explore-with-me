@@ -1,4 +1,4 @@
-package ru.practicum.ewm.controller;
+package ru.practicum.ewm.controller.admin;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,9 +30,9 @@ public class AdminEventsController {
 
     @GetMapping
     public ResponseEntity<List<EventFullDto>> getAll(
-            @RequestParam(defaultValue = "0")
+            @RequestParam(value = "from", defaultValue = "0")
             @Min(value = 0, message = "minimum value for from param is 0") Integer from,
-            @RequestParam(defaultValue = "10")
+            @RequestParam(value = "size", defaultValue = "10")
             @Min(value = 1, message = "minimum value for size param is 1") Integer size,
             @RequestParam(value = "users", required = false) List<Long> userIds,
             @RequestParam(value = "states", required = false) List<EventState> states,
@@ -55,7 +55,7 @@ public class AdminEventsController {
     }
 
     @PatchMapping(consumes = "application/json", path = "/{eventId}")
-    public ResponseEntity<EventFullDto> update(@RequestBody @Valid UpdateEventAdminRequest dto,
+    public ResponseEntity<EventFullDto> update(@RequestBody UpdateEventAdminRequest dto,
                                                    @PathVariable("eventId") Long eventId) {
         log.info("Update event {} with id {}", dto, eventId);
         var event = eventService.updateByAdmin(eventId, dto);

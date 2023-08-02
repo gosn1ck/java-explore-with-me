@@ -1,4 +1,4 @@
-package ru.practicum.ewm.controller;
+package ru.practicum.ewm.controller.admin;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -51,9 +51,9 @@ public class AdminUserController {
                 .body(userMapper.entityToUserResponse(savedUser));
     }
 
-    @DeleteMapping("{id}")
+    @DeleteMapping("{userId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@PathVariable("id") Long id) {
+    public void delete(@PathVariable("userId") Long id) {
         log.info("Remove user with id: {}", id);
         userService.deleteById(id);
     }

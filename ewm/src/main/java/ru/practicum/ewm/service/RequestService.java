@@ -42,7 +42,7 @@ public class RequestService {
             throw new ClientErrorException("impossible request to event %d", eventId);
         }
 
-        var confirmedRequests = requestRepository.findAllByEventIdAndStatus(eventId, CONFIRMED.toString());
+        var confirmedRequests = requestRepository.findAllByEventIdAndStatus(eventId, CONFIRMED);
         if (confirmedRequests.size() == event.getParticipantLimit()) {
             throw new ClientErrorException("impossible request to event. participant limit");
         }
@@ -78,6 +78,7 @@ public class RequestService {
         }
 
         request.setStatus(CANCELED);
+        requestRepository.save(request);
         return request;
     }
 
