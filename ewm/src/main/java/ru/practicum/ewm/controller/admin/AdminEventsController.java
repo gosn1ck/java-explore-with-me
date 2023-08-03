@@ -6,14 +6,15 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.ewm.dto.*;
-import ru.practicum.ewm.exception.BadRequestException;
 import ru.practicum.ewm.mapper.EventMapper;
 import ru.practicum.ewm.model.EventState;
 import ru.practicum.ewm.service.EventService;
+import ru.practicum.ewm.service.RequestService;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -26,6 +27,7 @@ import static ru.practicum.ewm.util.Constants.DATE_FORMAT;
 public class AdminEventsController {
 
     private final EventService eventService;
+    private final RequestService requestService;
     private final EventMapper eventMapper;
 
     @GetMapping
@@ -45,13 +47,16 @@ public class AdminEventsController {
         log.info("Get all events, from {}, size {}, users {}, states {}, categories {}, rangeStart {}, rangeEnd {}",
                 from, size, userIds, states, categoryIds, rangeStart, rangeEnd);
 
-        if (rangeStart.isAfter(rangeEnd)) {
-            throw new BadRequestException("rangeStart parameter should be before rangeEnd parameter");
-        }
+        var events = eventService.getAllAdmin(from, size, userIds, states, categoryIds, rangeStart, rangeEnd);
+        var eventRequests = requestService.requestsByEvents(events);
+        var fullDtos = events.stream().map(event -> {
+            var fullDto = eventMapper.entityToEventFullDto(event);
+            var requests = eventRequests.getOrDefault(event, new ArrayList<>());
+            fullDto.setConfirmedRequests(requests.size());
+            return fullDto;
+        }).collect(Collectors.toList());
 
-        var events = eventService.getAll(from, size, userIds, states, categoryIds, rangeStart, rangeEnd);
-        return ResponseEntity.ok(
-                events.stream().map(eventMapper::entityToEventFullDto).collect(Collectors.toList()));
+        return ResponseEntity.ok(fullDtos);
     }
 
     @PatchMapping(consumes = "application/json", path = "/{eventId}")
@@ -59,7 +64,9 @@ public class AdminEventsController {
                                                    @PathVariable("eventId") Long eventId) {
         log.info("Update event {} with id {}", dto, eventId);
         var event = eventService.updateByAdmin(eventId, dto);
-        return ResponseEntity.ok(eventMapper.entityToEventFullDto(event));
+        var fullDto = eventMapper.entityToEventFullDto(event);
+        fullDto.setConfirmedRequests(requestService.requestsByEvent(event));
+        return ResponseEntity.ok(fullDto);
     }
 
 }

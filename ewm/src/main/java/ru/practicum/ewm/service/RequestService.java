@@ -1,6 +1,5 @@
 package ru.practicum.ewm.service;
 
-import com.sun.jdi.request.EventRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,6 +12,8 @@ import ru.practicum.ewm.repository.UserRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static ru.practicum.ewm.model.EventState.PUBLISHED;
 import static ru.practicum.ewm.model.RequestStatus.*;
@@ -80,6 +81,18 @@ public class RequestService {
         request.setStatus(CANCELED);
         requestRepository.save(request);
         return request;
+    }
+
+    @Transactional(readOnly = true)
+    public Integer requestsByEvent(Event event) {
+        return requestRepository.countByEventAndStatus(event, CONFIRMED).orElse(0);
+    }
+
+    @Transactional(readOnly = true)
+    public Map<Event, List<Request>> requestsByEvents(List<Event> events) {
+        List<Request> confirmedRequests = requestRepository.findAllByEventInAndStatus(events, CONFIRMED);
+        return confirmedRequests.stream()
+                .collect(Collectors.groupingBy(Request::getEvent, Collectors.toList()));
     }
 
     private Request getRequest(Long id) {

@@ -12,7 +12,9 @@ import ru.practicum.ewm.exception.BadRequestException;
 import ru.practicum.ewm.mapper.EventMapper;
 import ru.practicum.ewm.model.EventSorts;
 import ru.practicum.ewm.service.EventService;
+import ru.practicum.ewm.service.RequestService;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import java.time.LocalDateTime;
@@ -29,7 +31,9 @@ import static ru.practicum.ewm.util.Constants.DATE_FORMAT;
 public class EventController {
 
     private final EventService eventService;
+    private final RequestService requestService;
     private final EventMapper eventMapper;
+    private final HttpServletRequest request;
 
     @GetMapping
     public ResponseEntity<List<EventShortDto>> getAll(
@@ -52,10 +56,6 @@ public class EventController {
                         "sort {}, onlyAvailable {}, paid {}",
                 from, size, text, categories, rangeStart, rangeEnd, sort, onlyAvailable, paid);
 
-//        if (rangeStart.isAfter(rangeEnd)) {
-//            throw new BadRequestException("rangeStart parameter should be before rangeEnd parameter");
-//        }
-
         var events = eventService.getAllPublic(from, size, text, categories, paid, rangeStart, rangeEnd,
                 onlyAvailable, sort);
         return ResponseEntity.ok(
@@ -65,12 +65,10 @@ public class EventController {
     @GetMapping("/{id}")
     public ResponseEntity<EventFullDto> get(@PathVariable("id") Long id) {
         log.info("Get event by id: {}", id);
-        var response = eventService.findById(id);
-        return response.map(eventMapper::entityToEventFullDto)
-                    .map(ResponseEntity::ok)
-                    .orElseGet(() -> ResponseEntity.notFound().build());
-
-
+        var event = eventService.findById(id, request);
+        var fullDto = eventMapper.entityToEventFullDto(event);
+        fullDto.setConfirmedRequests(requestService.requestsByEvent(event));
+        return ResponseEntity.ok(fullDto);
     }
 
 }

@@ -18,13 +18,19 @@ import ru.practicum.ewm.repository.CategoryRepository;
 import ru.practicum.ewm.repository.EventRepository;
 import ru.practicum.ewm.repository.UserRepository;
 import ru.practicum.ewm.specification.EventSpecification;
+import ru.practicum.stats.client.HitClient;
+import ru.practicum.stats.dto.HitDto;
 
+import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import static ru.practicum.ewm.model.EventSorts.VIEWS;
 import static ru.practicum.ewm.model.EventState.PENDING;
 import static ru.practicum.ewm.model.EventState.PUBLISHED;
+import static ru.practicum.ewm.util.Constants.APP_NAME;
+import static ru.practicum.ewm.util.Constants.DATE_FORMAT;
 
 @Service
 @RequiredArgsConstructor
@@ -33,6 +39,8 @@ public class EventService {
     private final CategoryRepository categoryRepository;
     private final EventRepository eventRepository;
     private final EventMapper eventMapper;
+    private final HitClient hitClient;
+    private final DateTimeFormatter Formatter = DateTimeFormatter.ofPattern(DATE_FORMAT);
 
     @Transactional(readOnly = true)
     public List<Event> getAllByInitiator(Long userId, Integer from, Integer size) {
@@ -41,39 +49,21 @@ public class EventService {
     }
 
     @Transactional(readOnly = true)
-    public List<Event> getAll(Integer from, Integer size, List<Long> userIds, List<EventState> states,
-                              List<Long> categoryIds, LocalDateTime rangeStart, LocalDateTime rangeEnd) {
+    public List<Event> getAllAdmin(Integer from, Integer size, List<Long> userIds, List<EventState> states,
+                                   List<Long> categoryIds, LocalDateTime rangeStart, LocalDateTime rangeEnd) {
         var page = PageRequest.of(from / size, size);
-
-        int mode = (userIds != null ? 1 : 0) | (states != null ? 2 : 0) | (categoryIds != null ? 4 : 0);
         var list = new ArrayList<Event>();
-        // todo переделать на спеки
-        switch (mode) {
-            case 0:
-                list.addAll(eventRepository.findAll(page).toList());
-                break;
-            case 1:
-                list.addAll(eventRepository.findAllByInitiatorIdIn(userIds, page));
-                break;
-            case 2:
-                list.addAll(eventRepository.findAllByStateIn(states, page));
-                break;
-            case 3:
-                list.addAll(eventRepository.findAllByInitiatorIdInAndStateIn(userIds, states, page));
-                break;
-            case 4:
-                list.addAll(eventRepository.findAllByCategoryIdIn(categoryIds, page));
-                break;
-            case 5:
-                list.addAll(eventRepository.findAllByInitiatorIdInAndCategoryIdIn(userIds, categoryIds, page));
-                break;
-            case 6:
-                list.addAll(eventRepository.findAllByStateInAndCategoryIdIn(states, categoryIds, page));
-                break;
-            case 7:
-                list.addAll(eventRepository.findAllByInitiatorIdInAndStateInAndCategoryIdIn(userIds, states, categoryIds, page));
-                break;
+
+        var users = userRepository.findAllById(userIds);
+        var categories = categoryRepository.findAllById(categoryIds);
+        if (rangeStart == null || rangeEnd == null) {
+            list.addAll(eventRepository.findAll(EventSpecification.adminSearchWithoutDate(
+                    users, categories, states), page).toList());
+        } else {
+            list.addAll(eventRepository.findAll(EventSpecification.adminSearchWithDate(
+                    users, categories, states, rangeStart, rangeEnd), page).toList());
         }
+
         return list;
     }
 
@@ -86,11 +76,11 @@ public class EventService {
         var list = new ArrayList<Event>();
 
         if (rangeStart == null || rangeEnd == null) {
-            list.addAll(eventRepository.findAll(EventSpecification.publicSearchWithoutRange(text, categories, paid,
-                    onlyAvailable), page).toList());
+            list.addAll(eventRepository.findAll(EventSpecification.publicSearchWithoutRange(
+                    text, categories, paid, onlyAvailable), page).toList());
         } else {
-            list.addAll(eventRepository.findAll(EventSpecification.publicSearchWithRange(text,
-                    categories, paid, onlyAvailable, rangeStart, rangeEnd), page).toList());
+            list.addAll(eventRepository.findAll(EventSpecification.publicSearchWithRange(
+                    text, categories, paid, onlyAvailable, rangeStart, rangeEnd), page).toList());
         }
         return list;
     }
@@ -115,6 +105,10 @@ public class EventService {
             throw new BadRequestException("Event must not be published");
         }
 
+        if (event.getState().equals(EventState.CANCELED)) {
+            event.setState(EventState.PENDING);
+        }
+
         eventMapper.updateEntity(event, dto);
         return eventRepository.save(event);
     }
@@ -122,9 +116,6 @@ public class EventService {
     @Transactional
     public Event updateByAdmin(Long eventId, UpdateEventAdminRequest dto) {
         var event = getEvent(eventId);
-        if (event == null) {
-            throw new NotFoundException("event with id %d not found", eventId);
-        }
 
         if (event.getState().equals(PUBLISHED)) {
             throw new BadRequestException("Event must not be published");
@@ -162,8 +153,10 @@ public class EventService {
         return events;
     }
 
-    public Optional<Event> findById(Long id) {
-        return Optional.of(getEvent(id));
+    public Event findById(Long id, HttpServletRequest request) {
+        var event = getEvent(id);
+        saveHit(request);
+        return event;
     }
 
     private Event getEvent(Long id) {
@@ -179,9 +172,14 @@ public class EventService {
         }
     }
 
-//    private User getUser(Long id) {
-//        return userRepository.findById(id)
-//                .orElseThrow(() -> new NotFoundException("user with id %d not found", id));
-//    }
+    private void saveHit(HttpServletRequest request) {
+        var dto = HitDto.builder()
+                .app(APP_NAME)
+                .uri(request.getRequestURI())
+                .ip(request.getRemoteAddr())
+                .timestamp(LocalDateTime.now().format(Formatter))
+                .build();
+        hitClient.add(dto);
+    }
 
 }

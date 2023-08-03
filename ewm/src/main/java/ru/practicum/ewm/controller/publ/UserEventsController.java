@@ -9,6 +9,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import ru.practicum.ewm.dto.*;
 import ru.practicum.ewm.mapper.EventMapper;
 import ru.practicum.ewm.service.EventService;
+import ru.practicum.ewm.service.RequestService;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
@@ -23,6 +24,7 @@ import java.util.stream.Collectors;
 public class UserEventsController {
 
     private final EventService eventService;
+    private final RequestService requestService;
     private final EventMapper eventMapper;
 
     @GetMapping
@@ -54,7 +56,9 @@ public class UserEventsController {
             @PathVariable("eventId") Long eventId) {
         log.info("Update eventId {} by userId {}, by dto {}", eventId, userId, dto);
         var event = eventService.update(eventId, userId, dto);
-        return ResponseEntity.ok(eventMapper.entityToEventFullDto(event));
+        var fullDto = eventMapper.entityToEventFullDto(event);
+        fullDto.setConfirmedRequests(requestService.requestsByEvent(event));
+        return ResponseEntity.ok(fullDto);
     }
 
     @PostMapping(consumes = "application/json")
@@ -66,8 +70,10 @@ public class UserEventsController {
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{id}")
                 .buildAndExpand(savedEvent.getId()).toUri();
-        return ResponseEntity.created(location)
-                .body(eventMapper.entityToEventFullDto(savedEvent));
+        var eventFullDto = eventMapper.entityToEventFullDto(savedEvent);
+        eventFullDto.setViews(0);
+        eventFullDto.setConfirmedRequests(0);
+        return ResponseEntity.created(location).body(eventFullDto);
     }
 
 }

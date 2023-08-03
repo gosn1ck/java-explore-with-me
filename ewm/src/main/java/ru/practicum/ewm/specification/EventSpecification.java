@@ -3,6 +3,8 @@ package ru.practicum.ewm.specification;
 import org.springframework.data.jpa.domain.Specification;
 import ru.practicum.ewm.model.Category;
 import ru.practicum.ewm.model.Event;
+import ru.practicum.ewm.model.EventState;
+import ru.practicum.ewm.model.User;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -38,27 +40,46 @@ public class EventSpecification {
                 .and(eventDateBefore(end));
     }
 
-    public static Specification<Event> annotationLike(String annotation) {
+    public static Specification<Event> adminSearchWithDate(
+            List<User> users, List<Category> categories, List<EventState> states,
+            LocalDateTime start, LocalDateTime end) {
+        return Specification
+                .where(belongsToInitiator(users))
+                .and(belongsToState(states))
+                .and(belongsToCategory(categories))
+                .and(eventDateAfter(start))
+                .and(eventDateBefore(end));
+    }
+
+    public static Specification<Event> adminSearchWithoutDate(
+            List<User> users, List<Category> categories, List<EventState> states) {
+        return Specification
+                .where(belongsToInitiator(users))
+                .and(belongsToState(states))
+                .and(belongsToCategory(categories));
+    }
+
+    private static Specification<Event> annotationLike(String annotation) {
         return (root, query, builder) ->
                 builder.like(builder.upper(root.get("annotation")), "%" + annotation.toUpperCase() + "%");
     }
 
-    public static Specification<Event> descriptionLike(String description) {
+    private static Specification<Event> descriptionLike(String description) {
         return (root, query, builder) ->
                 builder.like(builder.upper(root.get("description")), "%" + description.toUpperCase() + "%");
     }
 
-    public static Specification<Event> belongsToCategory(List<Category> categories) {
+    private static Specification<Event> belongsToCategory(List<Category> categories) {
         return (root, query, builder) ->
                 builder.in(root.get("category")).value(categories);
     }
 
-    public static Specification<Event> isPaid(Boolean paid) {
+    private static Specification<Event> isPaid(Boolean paid) {
         return (root, query, builder) ->
                 builder.equal(root.get("paid"), paid);
     }
 
-    public static Specification<Event> isAvailable(Boolean onlyAvailable) {
+    private static Specification<Event> isAvailable(Boolean onlyAvailable) {
         if (onlyAvailable) {
             return Specification
                     .where(isParticipantLimitEqualZero().or(isAvailableForRequest()));
@@ -68,29 +89,39 @@ public class EventSpecification {
         }
     }
 
-    public static Specification<Event> isParticipantLimitEqualZero() {
+    private static Specification<Event> isParticipantLimitEqualZero() {
         return (root, query, builder) ->
                 builder.equal(root.get("participantLimit"), 0);
     }
 
-    public static Specification<Event> isAvailableForRequest() {
+    private static Specification<Event> isAvailableForRequest() {
         return (root, query, builder) ->
                 builder.equal(root.get("availableForRequest"), true);
     }
 
-    public static Specification<Event> isPublished() {
+    private static Specification<Event> isPublished() {
         return (root, query, builder) ->
                 builder.equal(root.get("state"), PUBLISHED);
     }
 
-    public static Specification<Event> eventDateAfter(LocalDateTime date) {
+    private static Specification<Event> eventDateAfter(LocalDateTime date) {
         return (root, query, builder) ->
                 builder.greaterThanOrEqualTo(root.get("eventDate"), date);
     }
 
-    public static Specification<Event> eventDateBefore(LocalDateTime date) {
+    private static Specification<Event> eventDateBefore(LocalDateTime date) {
         return (root, query, builder) ->
                 builder.lessThanOrEqualTo(root.get("eventDate"), date);
+    }
+
+    private static Specification<Event> belongsToInitiator(List<User> users) {
+        return (root, query, criteriaBuilder) ->
+                criteriaBuilder.in(root.get("initiator")).value(users);
+    }
+
+    private static Specification<Event> belongsToState(List<EventState> states) {
+        return (root, query, criteriaBuilder) ->
+                criteriaBuilder.in(root.get("state")).value(states);
     }
 
 }
