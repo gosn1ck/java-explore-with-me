@@ -2,7 +2,6 @@ package ru.practicum.ewm.mapper;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingTarget;
-import org.mapstruct.NullValuePropertyMappingStrategy;
 import ru.practicum.ewm.dto.UserDto;
 import ru.practicum.ewm.dto.UserResponse;
 import ru.practicum.ewm.dto.UserShortResponse;

@@ -11,7 +11,6 @@ import ru.practicum.ewm.dto.UpdateCompilationRequest;
 import ru.practicum.ewm.exception.ClientErrorException;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.mapper.CompilationMapper;
-import ru.practicum.ewm.model.Category;
 import ru.practicum.ewm.model.Compilation;
 import ru.practicum.ewm.repository.CompilationRepository;
 

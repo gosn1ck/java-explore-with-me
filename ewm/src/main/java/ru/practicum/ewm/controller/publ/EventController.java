@@ -8,7 +8,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.ewm.dto.EventFullDto;
 import ru.practicum.ewm.dto.EventShortDto;
-import ru.practicum.ewm.exception.BadRequestException;
 import ru.practicum.ewm.mapper.EventMapper;
 import ru.practicum.ewm.model.EventSorts;
 import ru.practicum.ewm.service.EventService;
