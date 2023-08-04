@@ -44,9 +44,9 @@ public class AdminCategoryController {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    @DeleteMapping("{id}")
+    @DeleteMapping("{catId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@PathVariable("id") Long id) {
+    public void delete(@PathVariable("catId") Long id) {
         log.info("Remove category with id: {}", id);
         categoriesService.deleteById(id);
     }

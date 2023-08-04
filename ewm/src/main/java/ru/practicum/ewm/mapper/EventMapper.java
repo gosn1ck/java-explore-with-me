@@ -3,7 +3,6 @@ package ru.practicum.ewm.mapper;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
-import org.mapstruct.NullValuePropertyMappingStrategy;
 import ru.practicum.ewm.dto.*;
 import ru.practicum.ewm.model.Event;
 import ru.practicum.ewm.service.CategoryService;
@@ -18,8 +17,10 @@ public interface EventMapper {
     @Mapping(target = "eventDate", dateFormat = DATE_FORMAT)
     Event dtoToEntity(NewEventDto dto);
 
+    @Mapping(target = "eventDate", dateFormat = DATE_FORMAT)
     void updateEntity(@MappingTarget Event entity, UpdateEventUserRequest dto);
 
+    @Mapping(target = "eventDate", dateFormat = DATE_FORMAT)
     void updateEntity(@MappingTarget Event entity, UpdateEventAdminRequest dto);
 
     EventFullDto entityToEventFullDto(Event event);

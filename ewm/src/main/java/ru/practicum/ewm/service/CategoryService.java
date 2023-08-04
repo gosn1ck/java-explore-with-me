@@ -13,6 +13,7 @@ import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.mapper.CategoryMapper;
 import ru.practicum.ewm.model.Category;
 import ru.practicum.ewm.repository.CategoryRepository;
+import ru.practicum.ewm.repository.EventRepository;
 
 import java.util.List;
 import java.util.Optional;
@@ -23,6 +24,7 @@ import java.util.Optional;
 public class CategoryService {
 
     private final CategoryRepository categoryRepository;
+    private final EventRepository eventRepository;
     private final CategoryMapper categoryMapper;
 
     @Transactional
@@ -60,6 +62,10 @@ public class CategoryService {
 
     @Transactional
     public void deleteById(Long id) {
+        Long relatedEvents = eventRepository.countByCategoryId(id);
+        if (relatedEvents != 0) {
+            throw new ClientErrorException("cannot remove category with id %d", id);
+        }
         categoryRepository.deleteById(id);
     }
 

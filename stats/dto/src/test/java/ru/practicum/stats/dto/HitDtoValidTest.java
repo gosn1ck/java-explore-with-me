@@ -81,17 +81,20 @@ class HitDtoValidTest {
 
         validates = underTest.validate(dto);
         assertTrue(validates.size() > 0);
-        assertEquals(validates.stream().findFirst().get().getMessage(), "Date Format is not valid.");
+        assertEquals(validates.stream().findFirst().get().getMessage(),
+                "Date Format is not valid. Format should be \"yyyy-MM-dd HH:mm:ss\"");
 
         dto.setTimestamp(" ");
         validates = underTest.validate(dto);
         assertTrue(validates.size() > 0);
-        assertEquals(validates.stream().findFirst().get().getMessage(), "Date Format is not valid.");
+        assertEquals(validates.stream().findFirst().get().getMessage(),
+                "Date Format is not valid. Format should be \"yyyy-MM-dd HH:mm:ss\"");
 
         dto.setTimestamp("2022-09-06");
         validates = underTest.validate(dto);
         assertTrue(validates.size() > 0);
-        assertEquals(validates.stream().findFirst().get().getMessage(), "Date Format is not valid.");
+        assertEquals(validates.stream().findFirst().get().getMessage(),
+                "Date Format is not valid. Format should be \"yyyy-MM-dd HH:mm:ss\"");
 
     }
 

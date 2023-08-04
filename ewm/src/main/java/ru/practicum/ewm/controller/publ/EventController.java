@@ -56,7 +56,7 @@ public class EventController {
                 from, size, text, categories, rangeStart, rangeEnd, sort, onlyAvailable, paid);
 
         var events = eventService.getAllPublic(from, size, text, categories, paid, rangeStart, rangeEnd,
-                onlyAvailable, sort);
+                onlyAvailable, sort, request);
         return ResponseEntity.ok(
                 events.stream().map(eventMapper::entityToEventShortDto).collect(Collectors.toList()));
     }

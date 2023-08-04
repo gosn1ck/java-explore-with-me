@@ -6,9 +6,10 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.dto.NewEventDto;
+import ru.practicum.ewm.dto.StateActions;
 import ru.practicum.ewm.dto.UpdateEventAdminRequest;
 import ru.practicum.ewm.dto.UpdateEventUserRequest;
-import ru.practicum.ewm.exception.BadRequestException;
+import ru.practicum.ewm.exception.ClientErrorException;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.mapper.EventMapper;
 import ru.practicum.ewm.model.Event;
@@ -24,11 +25,13 @@ import ru.practicum.stats.dto.HitDto;
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import static ru.practicum.ewm.model.EventSorts.VIEWS;
-import static ru.practicum.ewm.model.EventState.PENDING;
-import static ru.practicum.ewm.model.EventState.PUBLISHED;
+import static ru.practicum.ewm.model.EventState.*;
 import static ru.practicum.ewm.util.Constants.APP_NAME;
 import static ru.practicum.ewm.util.Constants.DATE_FORMAT;
 
@@ -70,7 +73,7 @@ public class EventService {
     @Transactional(readOnly = true)
     public List<Event> getAllPublic(Integer from, Integer size, String text, List<Long> categoryIds, Boolean paid,
                                     LocalDateTime rangeStart, LocalDateTime rangeEnd, Boolean onlyAvailable,
-                                    EventSorts sort) {
+                                    EventSorts sort, HttpServletRequest request) {
         PageRequest page = pageByEventSort(from, size, sort);
         var categories = categoryRepository.findAllByIdIn(categoryIds);
         var list = new ArrayList<Event>();
@@ -82,6 +85,7 @@ public class EventService {
             list.addAll(eventRepository.findAll(EventSpecification.publicSearchWithRange(
                     text, categories, paid, onlyAvailable, rangeStart, rangeEnd), page).toList());
         }
+        saveHit(request);
         return list;
     }
 
@@ -101,13 +105,18 @@ public class EventService {
             throw new NotFoundException("event with id %d not found", eventId);
         }
 
-        if (event.getState().equals(PUBLISHED)) {
-            throw new BadRequestException("Event must not be published");
+//        if (event.getState().equals(PUBLISHED)) {
+//            throw new BadRequestException("Event must not be published");
+//        }
+//        if (event.getState().equals(EventState.CANCELED)) {
+//            event.setState(EventState.PENDING);
+//        }
+
+        if (event.getState().equals(PENDING) || (event.getState().equals(CANCELED))) {
+            throw new ClientErrorException("impossible to update event");
         }
 
-        if (event.getState().equals(EventState.CANCELED)) {
-            event.setState(EventState.PENDING);
-        }
+        updateState(event, dto.getStateAction());
 
         eventMapper.updateEntity(event, dto);
         return eventRepository.save(event);
@@ -117,9 +126,11 @@ public class EventService {
     public Event updateByAdmin(Long eventId, UpdateEventAdminRequest dto) {
         var event = getEvent(eventId);
 
-        if (event.getState().equals(PUBLISHED)) {
-            throw new BadRequestException("Event must not be published");
-        }
+//        if (event.getState().equals(PUBLISHED)) {
+//            throw new BadRequestException("Event must not be published");
+//        }
+
+        updateState(event, dto.getStateAction());
 
         eventMapper.updateEntity(event, dto);
         return eventRepository.save(event);
@@ -153,6 +164,7 @@ public class EventService {
         return events;
     }
 
+    @Transactional(readOnly = true)
     public Event findById(Long id, HttpServletRequest request) {
         var event = getEvent(id);
         saveHit(request);
@@ -172,11 +184,52 @@ public class EventService {
         }
     }
 
+    private void updateState(Event event, StateActions action) {
+        if (action == null) {
+            return;
+        }
+        switch (action) {
+            case CANCEL_REVIEW:
+                event.setState(CANCELED);
+                break;
+            case PUBLISH_EVENT:
+                publishEvent(event);
+                break;
+            case REJECT_EVENT:
+                rejectEvent(event);
+                break;
+            case SEND_TO_REVIEW:
+                event.setState(PENDING);
+                break;
+        }
+    }
+
+    private void publishEvent(Event event) {
+        if (event.getEventDate().isAfter(LocalDateTime.now().plusHours(1))
+                && event.getState().equals(PENDING)) {
+            event.setState(PUBLISHED);
+            event.setPublishedOn(LocalDateTime.now());
+        } else if (event.getEventDate().isBefore(LocalDateTime.now().plusHours(1))) {
+            throw new ClientErrorException("impossible to publish event");
+        } else if (!event.getState().equals(PENDING)) {
+            throw new ClientErrorException("impossible to publish event");
+        }
+    }
+
+    public void rejectEvent(Event event) {
+        if (!event.getState().equals(PUBLISHED)) {
+            event.setState(CANCELED);
+        } else {
+            throw new ClientErrorException("impossible to reject event");
+        }
+    }
+
     private void saveHit(HttpServletRequest request) {
+        var ip = request.getRemoteAddr().equals("0:0:0:0:0:0:0:1") ? "127.0.0.1" : request.getRemoteAddr();
         var dto = HitDto.builder()
                 .app(APP_NAME)
                 .uri(request.getRequestURI())
-                .ip(request.getRemoteAddr())
+                .ip(ip)
                 .timestamp(LocalDateTime.now().format(Formatter))
                 .build();
         hitClient.add(dto);

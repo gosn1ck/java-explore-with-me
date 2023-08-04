@@ -13,4 +13,6 @@ public interface EventRepository extends JpaRepository<Event, Long>, JpaSpecific
 
     Event findFirstByInitiatorIdAndId(Long userId, Long id);
 
+    Long countByCategoryId(Long id);
+
 }
