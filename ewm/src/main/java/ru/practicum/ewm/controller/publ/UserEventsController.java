@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import ru.practicum.ewm.dto.*;
 import ru.practicum.ewm.mapper.EventMapper;
+import ru.practicum.ewm.mapper.RequestMapper;
 import ru.practicum.ewm.service.EventService;
 import ru.practicum.ewm.service.RequestService;
 
@@ -26,6 +27,7 @@ public class UserEventsController {
     private final EventService eventService;
     private final RequestService requestService;
     private final EventMapper eventMapper;
+    private final RequestMapper requestMapper;
 
     @GetMapping
     public ResponseEntity<List<EventShortDto>> getAll(
@@ -51,7 +53,7 @@ public class UserEventsController {
 
     @PatchMapping(consumes = "application/json", path = "/{eventId}")
     public ResponseEntity<EventFullDto> update(
-            @RequestBody @Valid UpdateEventUserRequest dto,
+            @RequestBody UpdateEventUserRequest dto,
             @PathVariable("userId") Long userId,
             @PathVariable("eventId") Long eventId) {
         log.info("Update eventId {} by userId {}, by dto {}", eventId, userId, dto);
@@ -74,6 +76,25 @@ public class UserEventsController {
         eventFullDto.setViews(0);
         eventFullDto.setConfirmedRequests(0);
         return ResponseEntity.created(location).body(eventFullDto);
+    }
+
+    @GetMapping("/{eventId}/requests")
+    public ResponseEntity<List<ParticipationRequestDto>> getRequests(
+            @PathVariable("userId") Long userId,
+            @PathVariable("eventId") Long eventId) {
+        log.info("Get participation request user id {}, event id {}", userId, eventId);
+        var requests = eventService.getRequests(userId, eventId);
+        return ResponseEntity.ok(
+                requests.stream().map(requestMapper::entityToParticipationRequest).collect(Collectors.toList()));
+    }
+
+    @PatchMapping("{eventId}/requests")
+    public ResponseEntity<EventRequestStatusUpdateResult> updateParticipationRequest(
+            @PathVariable("userId") Long userId,
+            @PathVariable("eventId") Long eventId,
+            @RequestBody EventRequestStatusUpdateRequest dto) {
+        log.info("Update status participation request user id {}, event id {}, dto {}", userId, eventId, dto);
+        return ResponseEntity.ok(eventService.updateParticipationRequest(userId, eventId, dto));
     }
 
 }

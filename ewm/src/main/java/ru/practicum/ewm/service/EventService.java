@@ -5,18 +5,15 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.practicum.ewm.dto.NewEventDto;
-import ru.practicum.ewm.dto.StateActions;
-import ru.practicum.ewm.dto.UpdateEventAdminRequest;
-import ru.practicum.ewm.dto.UpdateEventUserRequest;
+import ru.practicum.ewm.dto.*;
 import ru.practicum.ewm.exception.ClientErrorException;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.mapper.EventMapper;
-import ru.practicum.ewm.model.Event;
-import ru.practicum.ewm.model.EventSorts;
-import ru.practicum.ewm.model.EventState;
+import ru.practicum.ewm.mapper.RequestMapper;
+import ru.practicum.ewm.model.*;
 import ru.practicum.ewm.repository.CategoryRepository;
 import ru.practicum.ewm.repository.EventRepository;
+import ru.practicum.ewm.repository.RequestRepository;
 import ru.practicum.ewm.repository.UserRepository;
 import ru.practicum.ewm.specification.EventSpecification;
 import ru.practicum.stats.client.HitClient;
@@ -25,13 +22,12 @@ import ru.practicum.stats.dto.HitDto;
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static ru.practicum.ewm.model.EventSorts.VIEWS;
 import static ru.practicum.ewm.model.EventState.*;
+import static ru.practicum.ewm.model.RequestStatus.CONFIRMED;
 import static ru.practicum.ewm.util.Constants.APP_NAME;
 import static ru.practicum.ewm.util.Constants.DATE_FORMAT;
 
@@ -41,7 +37,9 @@ public class EventService {
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
     private final EventRepository eventRepository;
+    private final RequestRepository requestRepository;
     private final EventMapper eventMapper;
+    private final RequestMapper requestMapper;
     private final HitClient hitClient;
     private final DateTimeFormatter Formatter = DateTimeFormatter.ofPattern(DATE_FORMAT);
 
@@ -111,10 +109,9 @@ public class EventService {
 //        if (event.getState().equals(EventState.CANCELED)) {
 //            event.setState(EventState.PENDING);
 //        }
-
-        if (event.getState().equals(PENDING) || (event.getState().equals(CANCELED))) {
-            throw new ClientErrorException("impossible to update event");
-        }
+//        if (event.getState().equals(PENDING) || (event.getState().equals(CANCELED))) {
+//            throw new ClientErrorException("impossible to update event");
+//        }
 
         updateState(event, dto.getStateAction());
 
@@ -167,13 +164,97 @@ public class EventService {
     @Transactional(readOnly = true)
     public Event findById(Long id, HttpServletRequest request) {
         var event = getEvent(id);
+        if (!event.getState().equals(PUBLISHED)) {
+            throw new NotFoundException("event with id %d not found", id);
+        }
         saveHit(request);
         return event;
+    }
+
+    @Transactional(readOnly = true)
+    public List<Request> getRequests(Long userId, Long eventId) {
+        return requestRepository.findAllByRequesterIdAndEventId(userId, eventId);
+    }
+
+    @Transactional
+    public EventRequestStatusUpdateResult updateParticipationRequest(
+            Long userId, Long eventId, EventRequestStatusUpdateRequest dto) {
+        var user = getUser(userId);
+        var event = getEvent(eventId);
+        checkInitiator(user, event);
+
+        List<Request> requests = requestRepository.findAllByIdIn(dto.getRequestIds());
+        checkEventLimit(event);
+
+        if (requests.isEmpty()) return EventRequestStatusUpdateResult.builder().build();
+
+        requests = requests.stream().filter(r -> r.getStatus().equals(RequestStatus.PENDING)).collect(Collectors.toList());
+
+        switch (dto.getStatus()) {
+            case REJECTED:
+                rejectRequests(requests);
+                break;
+            case CONFIRMED:
+                filterAndProcessRequests(requests, event);
+                break;
+        }
+
+        var dtos = requests.stream().map(requestMapper::entityToParticipationRequest).collect(Collectors.toList());
+
+        return EventRequestStatusUpdateResult.builder()
+                .rejectedRequests(dtos.stream().filter(r -> r.getStatus().equals(RequestStatus.REJECTED)).collect(Collectors.toList()))
+                .confirmedRequests(dtos.stream().filter(r -> r.getStatus().equals(CONFIRMED)).collect(Collectors.toList()))
+                .build();
     }
 
     private Event getEvent(Long id) {
         return eventRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("event with id %d not found", id));
+    }
+
+    private User getUser(Long id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("user with id %d not found", id));
+    }
+
+    private void checkInitiator(User user, Event event) {
+        if (!event.getInitiator().getId().equals(user.getId())) {
+            throw new ClientErrorException("not valid initiator");
+        }
+    }
+
+    private void checkEventLimit(Event event) {
+        var confirmedRequests = requestRepository.findAllByEventIdAndStatus(event.getId(), CONFIRMED);
+        if (event.getParticipantLimit() - confirmedRequests.size() < 1) {
+            throw new ClientErrorException("impossible request to event. participant limit");
+        }
+    }
+
+    private void filterAndProcessRequests(List<Request> requests, Event event) {
+        if (event.getParticipantLimit() == 0) {
+            confirmRequests(requests);
+        } else {
+            var confirmedRequests = requestRepository.findAllByEventIdAndStatus(event.getId(), CONFIRMED);
+            int delta = event.getParticipantLimit() - confirmedRequests.size();
+            if (requests.size() <= delta) {
+                confirmRequests(requests);
+            } else if (delta > 0) {
+                confirmRequests(requests.subList(0, delta - 1));
+                rejectRequests(requests.subList(delta, requests.size()));
+            } else {
+                rejectRequests(requests);
+            }
+        }
+    }
+
+    private void confirmRequests(List<Request> requests) {
+        requests.forEach(request -> request.setStatus(RequestStatus.CONFIRMED));
+        requestRepository.saveAll(requests);
+    }
+
+    private void rejectRequests(List<Request> requests) {
+        requests.forEach(request -> request.setStatus(RequestStatus.REJECTED));
+        requestRepository.saveAll(requests);
     }
 
     private PageRequest pageByEventSort(Integer from, Integer size, EventSorts sort) {
