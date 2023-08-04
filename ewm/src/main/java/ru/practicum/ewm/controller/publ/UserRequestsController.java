@@ -2,12 +2,15 @@ package ru.practicum.ewm.controller.publ;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import ru.practicum.ewm.dto.RequestResponse;
 import ru.practicum.ewm.mapper.RequestMapper;
 import ru.practicum.ewm.service.RequestService;
 
+import java.net.URI;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -21,12 +24,16 @@ public class UserRequestsController {
     private final RequestMapper requestMapper;
 
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<RequestResponse> add(
             @PathVariable("userId") Long userId,
             @RequestParam("eventId") Long eventId) {
         log.info("New request registration userId {}, eventId {}", userId, eventId);
-        return ResponseEntity.ok(
-                requestMapper.entityToResponse(requestService.add(userId, eventId)));
+        var savedRequest = requestService.add(userId, eventId);
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(savedRequest.getId()).toUri();
+        return ResponseEntity.created(location).body(requestMapper.entityToResponse(savedRequest));
     }
 
     @GetMapping

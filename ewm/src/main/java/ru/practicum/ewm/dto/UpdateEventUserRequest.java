@@ -12,7 +12,6 @@ import ru.practicum.ewm.validator.ValidDateTimeFormat;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-//@EventDate
 public class UpdateEventUserRequest {
     private String annotation;
     private Long category;

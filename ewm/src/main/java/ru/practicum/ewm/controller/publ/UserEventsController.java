@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import ru.practicum.ewm.dto.*;
+import ru.practicum.ewm.exception.BadRequestException;
 import ru.practicum.ewm.mapper.EventMapper;
 import ru.practicum.ewm.mapper.RequestMapper;
 import ru.practicum.ewm.service.EventService;
@@ -15,8 +16,12 @@ import ru.practicum.ewm.service.RequestService;
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import java.net.URI;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static ru.practicum.ewm.util.Constants.DATE_FORMAT;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -57,6 +62,14 @@ public class UserEventsController {
             @PathVariable("userId") Long userId,
             @PathVariable("eventId") Long eventId) {
         log.info("Update eventId {} by userId {}, by dto {}", eventId, userId, dto);
+
+        if (dto.getEventDate() != null) {
+            var date = LocalDateTime.parse(dto.getEventDate(), DateTimeFormatter.ofPattern(DATE_FORMAT));
+            if (date.isBefore(LocalDateTime.now().plusHours(2))) {
+                throw new BadRequestException("impossible to update event");
+            }
+        }
+
         var event = eventService.update(eventId, userId, dto);
         var fullDto = eventMapper.entityToEventFullDto(event);
         fullDto.setConfirmedRequests(requestService.requestsByEvent(event));

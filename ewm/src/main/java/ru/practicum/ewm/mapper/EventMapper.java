@@ -15,6 +15,7 @@ public interface EventMapper {
 
     @Mapping(target = "category", ignore = true)
     @Mapping(target = "eventDate", dateFormat = DATE_FORMAT)
+    @Mapping(target = "participantLimit", source="participantLimit", defaultValue = "0")
     Event dtoToEntity(NewEventDto dto);
 
     @Mapping(target = "eventDate", dateFormat = DATE_FORMAT)

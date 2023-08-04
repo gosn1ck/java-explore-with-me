@@ -8,6 +8,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.ewm.dto.EventFullDto;
 import ru.practicum.ewm.dto.EventShortDto;
+import ru.practicum.ewm.exception.BadRequestException;
 import ru.practicum.ewm.mapper.EventMapper;
 import ru.practicum.ewm.model.EventSorts;
 import ru.practicum.ewm.service.EventService;
@@ -54,6 +55,10 @@ public class EventController {
         log.info("Get all events, from {}, size {}, text {}, categories {}, rangeStart {}, rangeEnd {}, " +
                         "sort {}, onlyAvailable {}, paid {}",
                 from, size, text, categories, rangeStart, rangeEnd, sort, onlyAvailable, paid);
+
+        if (rangeStart != null && rangeEnd != null && rangeEnd.isBefore(rangeStart)) {
+            throw new BadRequestException("range end is before range start");
+        }
 
         var events = eventService.getAllPublic(from, size, text, categories, paid, rangeStart, rangeEnd,
                 onlyAvailable, sort, request);

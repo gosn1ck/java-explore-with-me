@@ -16,7 +16,6 @@ import javax.validation.constraints.Size;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-//@EventDate
 public class UpdateEventAdminRequest {
     @NotBlank(message = "annotation field should not be empty")
     @Size(min = 10, max = 2000, message = "annotation field should be min 10, max 2000")
