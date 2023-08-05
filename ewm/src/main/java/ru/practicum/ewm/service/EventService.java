@@ -17,6 +17,7 @@ import ru.practicum.ewm.repository.RequestRepository;
 import ru.practicum.ewm.repository.UserRepository;
 import ru.practicum.ewm.specification.EventSpecification;
 import ru.practicum.stats.client.HitClient;
+import ru.practicum.stats.client.StatsClient;
 import ru.practicum.stats.dto.HitDto;
 
 import javax.servlet.http.HttpServletRequest;
@@ -43,6 +44,7 @@ public class EventService {
     private final EventMapper eventMapper;
     private final RequestMapper requestMapper;
     private final HitClient hitClient;
+    private final StatsClient statsClient;
 
     @Transactional(readOnly = true)
     public List<Event> getAllByInitiator(Long userId, Integer from, Integer size) {
@@ -106,12 +108,6 @@ public class EventService {
         if (event.getState().equals(PUBLISHED)) {
             throw new ClientErrorException("Event must not be published");
         }
-//        if (event.getState().equals(EventState.CANCELED)) {
-//            event.setState(EventState.PENDING);
-//        }
-//        if (event.getState().equals(PENDING) || (event.getState().equals(CANCELED))) {
-//            throw new ClientErrorException("impossible to update event");
-//        }
 
         updateState(event, dto.getStateAction());
 
@@ -122,10 +118,6 @@ public class EventService {
     @Transactional
     public Event updateByAdmin(Long eventId, UpdateEventAdminRequest dto) {
         var event = getEvent(eventId);
-
-//        if (event.getState().equals(PUBLISHED)) {
-//            throw new BadRequestException("Event must not be published");
-//        }
 
         updateState(event, dto.getStateAction());
 
@@ -210,6 +202,15 @@ public class EventService {
                 .rejectedRequests(dtos.stream().filter(r -> r.getStatus().equals(RequestStatus.REJECTED)).collect(Collectors.toList()))
                 .confirmedRequests(dtos.stream().filter(r -> r.getStatus().equals(CONFIRMED)).collect(Collectors.toList()))
                 .build();
+    }
+
+    public Integer getViews(Long eventId) {
+        var uri = "/events/" + eventId;
+        var response = statsClient.getStats(
+                LocalDateTime.now().minusDays(1),
+                LocalDateTime.now().plusDays(1),
+                List.of(uri), false);
+        return response.getBody().stream().filter(r -> r.getUri().equals(uri)).findFirst().get().getHits();
     }
 
     private Event getEvent(Long id) {

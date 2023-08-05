@@ -72,6 +72,7 @@ public class EventController {
         var event = eventService.findById(id, request);
         var fullDto = eventMapper.entityToEventFullDto(event);
         fullDto.setConfirmedRequests(requestService.requestsByEvent(event));
+        fullDto.setViews(eventService.getViews(event.getId()));
         return ResponseEntity.ok(fullDto);
     }
 

@@ -1,18 +1,23 @@
 server:
   port: 8080
 
+feign:
+  url:
+    hit: http://stats:9090/hit
+    stats: http://stats:9090/stats
+
 spring:
   application:
     name: ewm
   datasource:
-    username: ewm
-    password: ewm
-    url: jdbc:postgresql://localhost:5432/ewm
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    url: ${SPRING_DATASOURCE_URL}
   jpa:
+    show-sql: true
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
-        format_sql: 'true'
-      show-sql: true
+        format_sql: true
     hibernate:
-      ddl-auto: update
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO}
