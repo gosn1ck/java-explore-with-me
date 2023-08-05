@@ -13,6 +13,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import static java.lang.Boolean.TRUE;
+
 @Service
 @RequiredArgsConstructor
 public class HitService {
@@ -28,7 +30,7 @@ public class HitService {
 
     @Transactional(readOnly = true)
     public List<StatsResponse> getStats(LocalDateTime start, LocalDateTime end, List<String> uris, Boolean unique) {
-        int mode = (uris != null ? 1 : 0) | (unique != null ? 2 : 0);
+        int mode = (uris != null ? 1 : 0) | (TRUE.equals(unique) ? 2 : 0);
         var list = new ArrayList<StatsResponse>();
         switch (mode) {
             case 0:
