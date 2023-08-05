@@ -3,8 +3,8 @@ server:
 
 feign:
   url:
-    hit: http://stats:9090/hit
-    stats: http://stats:9090/stats
+    hit: http://stats-server:9090/hit
+    stats: http://stats-server:9090/stats
 
 spring:
   application:
