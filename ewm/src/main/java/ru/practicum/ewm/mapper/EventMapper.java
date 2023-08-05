@@ -24,8 +24,12 @@ public interface EventMapper {
     @Mapping(target = "eventDate", dateFormat = DATE_FORMAT)
     void updateEntity(@MappingTarget Event entity, UpdateEventAdminRequest dto);
 
+    @Mapping(target = "eventDate", dateFormat = DATE_FORMAT)
+    @Mapping(target = "createdOn", dateFormat = DATE_FORMAT)
+    @Mapping(target = "publishedOn", dateFormat = DATE_FORMAT)
     EventFullDto entityToEventFullDto(Event event);
 
+    @Mapping(target = "eventDate", dateFormat = DATE_FORMAT)
     EventShortDto entityToEventShortDto(Event event);
 
 }

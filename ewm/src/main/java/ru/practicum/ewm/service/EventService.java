@@ -173,7 +173,12 @@ public class EventService {
 
     @Transactional(readOnly = true)
     public List<Request> getRequests(Long userId, Long eventId) {
-        return requestRepository.findAllByRequesterIdAndEventId(userId, eventId);
+        var user = getUser(userId);
+        var event = getEvent(eventId);
+        checkInitiator(user, event);
+
+        return requestRepository.findAllByEvent(event);
+
     }
 
     @Transactional

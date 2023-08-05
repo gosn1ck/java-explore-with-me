@@ -13,6 +13,7 @@ import static ru.practicum.ewm.util.Constants.DATE_FORMAT;
 public interface RequestMapper {
     @Mapping(target = "event", source = "event.id")
     @Mapping(target = "requester", source = "requester.id")
+    @Mapping(target = "created", dateFormat = DATE_FORMAT)
     RequestResponse entityToResponse(Request entity);
 
     @Mapping(target = "event", source = "event.id")
