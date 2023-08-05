@@ -60,27 +60,45 @@ public class EventSpecification {
     }
 
     private static Specification<Event> annotationLike(String annotation) {
-        return (root, query, builder) ->
-                builder.like(builder.upper(root.get("annotation")), "%" + annotation.toUpperCase() + "%");
+        return (root, query, builder) -> {
+            if (annotation.isEmpty()) {
+                return builder.conjunction();
+            }
+            return builder.like(builder.upper(root.get("annotation")), "%" + annotation.toUpperCase() + "%");
+        };
     }
 
     private static Specification<Event> descriptionLike(String description) {
-        return (root, query, builder) ->
-                builder.like(builder.upper(root.get("description")), "%" + description.toUpperCase() + "%");
+        return (root, query, builder) -> {
+            if (description.isEmpty()) {
+                return builder.conjunction();
+            }
+            return builder.like(builder.upper(root.get("description")), "%" + description.toUpperCase() + "%");
+        };
     }
 
     private static Specification<Event> belongsToCategory(List<Category> categories) {
-        return (root, query, builder) ->
-                builder.in(root.get("category")).value(categories);
+        return (root, query, builder) -> {
+            if (categories.isEmpty()) {
+                return builder.conjunction();
+            }
+            return builder.in(root.get("category")).value(categories);
+        };
     }
 
     private static Specification<Event> isPaid(Boolean paid) {
-        return (root, query, builder) ->
-                builder.equal(root.get("paid"), paid);
+        return (root, query, builder) -> {
+            if (paid == null) {
+                return builder.conjunction();
+            }
+            return builder.equal(root.get("paid"), paid);
+        };
     }
 
     private static Specification<Event> isAvailable(Boolean onlyAvailable) {
-        if (onlyAvailable) {
+        if (onlyAvailable == null) {
+            return (root, query, builder) -> builder.conjunction();
+        } else if (onlyAvailable) {
             return Specification
                     .where(isParticipantLimitEqualZero().or(isAvailableForRequest()));
         } else {
@@ -115,13 +133,21 @@ public class EventSpecification {
     }
 
     private static Specification<Event> belongsToInitiator(List<User> users) {
-        return (root, query, criteriaBuilder) ->
-                criteriaBuilder.in(root.get("initiator")).value(users);
+        return (root, query, builder) -> {
+            if (users.isEmpty()) {
+                return builder.conjunction();
+            }
+            return builder.in(root.get("initiator")).value(users);
+        };
     }
 
     private static Specification<Event> belongsToState(List<EventState> states) {
-        return (root, query, criteriaBuilder) ->
-                criteriaBuilder.in(root.get("state")).value(states);
+        return (root, query, builder) -> {
+            if (states == null) {
+                return builder.conjunction();
+            }
+            return builder.in(root.get("state")).value(states);
+        };
     }
 
 }

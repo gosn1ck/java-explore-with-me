@@ -18,6 +18,6 @@ public class UserDto {
     private String name;
     @NotEmpty(message = "Email should not be empty")
     @Email(message = "Email is not valid")
-    @Size(min = 6, max = 254, message = "name field should be min 2, max 250")
+    @Size(min = 6, max = 254, message = "Email field should be min 6, max 254")
     private String email;
 }

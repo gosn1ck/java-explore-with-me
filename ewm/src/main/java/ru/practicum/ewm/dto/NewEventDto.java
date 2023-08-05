@@ -17,7 +17,7 @@ import javax.validation.constraints.*;
 @EventDate
 public class NewEventDto {
     @NotBlank(message = "annotation field should not be empty")
-    @Size(min = 10, max = 2000, message = "annotation field should be min 10, max 2000")
+    @Size(min = 20, max = 2000, message = "annotation field should be min 20, max 2000")
     private String annotation;
 
     @NotNull(message = "category field should not be null")

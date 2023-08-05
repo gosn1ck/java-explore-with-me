@@ -16,12 +16,12 @@ import ru.practicum.ewm.service.RequestService;
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import static ru.practicum.ewm.util.Constants.DATE_FORMAT;
+import static ru.practicum.ewm.util.Constants.FORMATTER;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -67,12 +67,13 @@ public class AdminEventsController {
     }
 
     @PatchMapping(consumes = "application/json", path = "/{eventId}")
-    public ResponseEntity<EventFullDto> update(@RequestBody UpdateEventAdminRequest dto,
-                                                   @PathVariable("eventId") Long eventId) {
+    public ResponseEntity<EventFullDto> update(
+            @RequestBody @Valid UpdateEventAdminRequest dto,
+            @PathVariable("eventId") Long eventId) {
         log.info("Update event {} with id {}", dto, eventId);
 
         if (dto.getEventDate() != null) {
-            var date = LocalDateTime.parse(dto.getEventDate(), DateTimeFormatter.ofPattern(DATE_FORMAT));
+            var date = LocalDateTime.parse(dto.getEventDate(), FORMATTER);
             if (date.isBefore(LocalDateTime.now().plusHours(1))) {
                 throw new BadRequestException("impossible to update event");
             }

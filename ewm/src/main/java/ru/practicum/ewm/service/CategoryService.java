@@ -34,7 +34,7 @@ public class CategoryService {
         try {
             return categoryRepository.saveAndFlush(category);
         } catch (DataIntegrityViolationException e) {
-            throw new ClientErrorException("category with email %s already exists", dto.getName());
+            throw new ClientErrorException("category with name %s already exists", dto.getName());
         }
     }
 
@@ -45,7 +45,7 @@ public class CategoryService {
         try {
             return Optional.of(categoryRepository.saveAndFlush(category));
         } catch (DataIntegrityViolationException e) {
-            throw new ClientErrorException("category with email %s already exists", dto.getName());
+            throw new ClientErrorException("category with name %s already exists", dto.getName());
         }
     }
 

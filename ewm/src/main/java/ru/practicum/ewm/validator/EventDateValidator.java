@@ -5,9 +5,8 @@ import ru.practicum.ewm.dto.NewEventDto;
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 
-import static ru.practicum.ewm.util.Constants.DATE_FORMAT;
+import static ru.practicum.ewm.util.Constants.FORMATTER;
 
 public class EventDateValidator implements ConstraintValidator<EventDate, NewEventDto> {
 
@@ -16,7 +15,7 @@ public class EventDateValidator implements ConstraintValidator<EventDate, NewEve
         if (value.getEventDate() == null) {
             return true;
         }
-        var eventDate = LocalDateTime.parse(value.getEventDate(), DateTimeFormatter.ofPattern(DATE_FORMAT));
+        var eventDate = LocalDateTime.parse(value.getEventDate(), FORMATTER);
         return eventDate.minusHours(2).isAfter(LocalDateTime.now());
     }
 }

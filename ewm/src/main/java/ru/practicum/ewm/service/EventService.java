@@ -21,15 +21,17 @@ import ru.practicum.stats.dto.HitDto;
 
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static ru.practicum.ewm.model.EventSorts.VIEWS;
 import static ru.practicum.ewm.model.EventState.*;
 import static ru.practicum.ewm.model.RequestStatus.CONFIRMED;
 import static ru.practicum.ewm.util.Constants.APP_NAME;
-import static ru.practicum.ewm.util.Constants.DATE_FORMAT;
+import static ru.practicum.ewm.util.Constants.FORMATTER;
 
 @Service
 @RequiredArgsConstructor
@@ -41,7 +43,6 @@ public class EventService {
     private final EventMapper eventMapper;
     private final RequestMapper requestMapper;
     private final HitClient hitClient;
-    private final DateTimeFormatter Formatter = DateTimeFormatter.ofPattern(DATE_FORMAT);
 
     @Transactional(readOnly = true)
     public List<Event> getAllByInitiator(Long userId, Integer from, Integer size) {
@@ -55,8 +56,8 @@ public class EventService {
         var page = PageRequest.of(from / size, size);
         var list = new ArrayList<Event>();
 
-        var users = userRepository.findAllById(userIds);
-        var categories = categoryRepository.findAllById(categoryIds);
+        var users = userIds == null ? new ArrayList<User>() : userRepository.findAllById(userIds);
+        var categories = categoryIds == null ? new ArrayList<Category>() : categoryRepository.findAllById(categoryIds);
         if (rangeStart == null || rangeEnd == null) {
             list.addAll(eventRepository.findAll(EventSpecification.adminSearchWithoutDate(
                     users, categories, states), page).toList());
@@ -73,9 +74,9 @@ public class EventService {
                                     LocalDateTime rangeStart, LocalDateTime rangeEnd, Boolean onlyAvailable,
                                     EventSorts sort, HttpServletRequest request) {
         PageRequest page = pageByEventSort(from, size, sort);
-        var categories = categoryRepository.findAllByIdIn(categoryIds);
         var list = new ArrayList<Event>();
 
+        var categories = categoryIds == null ? new ArrayList<Category>() : categoryRepository.findAllById(categoryIds);
         if (rangeStart == null || rangeEnd == null) {
             list.addAll(eventRepository.findAll(EventSpecification.publicSearchWithoutRange(
                     text, categories, paid, onlyAvailable), page).toList());
@@ -102,10 +103,9 @@ public class EventService {
         if (event == null) {
             throw new NotFoundException("event with id %d not found", eventId);
         }
-
-//        if (event.getState().equals(PUBLISHED)) {
-//            throw new BadRequestException("Event must not be published");
-//        }
+        if (event.getState().equals(PUBLISHED)) {
+            throw new ClientErrorException("Event must not be published");
+        }
 //        if (event.getState().equals(EventState.CANCELED)) {
 //            event.setState(EventState.PENDING);
 //        }
@@ -316,7 +316,7 @@ public class EventService {
                 .app(APP_NAME)
                 .uri(request.getRequestURI())
                 .ip(ip)
-                .timestamp(LocalDateTime.now().format(Formatter))
+                .timestamp(LocalDateTime.now().format(FORMATTER))
                 .build();
         hitClient.add(dto);
     }

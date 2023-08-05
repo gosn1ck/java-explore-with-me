@@ -17,11 +17,10 @@ import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import java.net.URI;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static ru.practicum.ewm.util.Constants.DATE_FORMAT;
+import static ru.practicum.ewm.util.Constants.FORMATTER;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -58,13 +57,13 @@ public class UserEventsController {
 
     @PatchMapping(consumes = "application/json", path = "/{eventId}")
     public ResponseEntity<EventFullDto> update(
-            @RequestBody UpdateEventUserRequest dto,
+            @RequestBody @Valid UpdateEventUserRequest dto,
             @PathVariable("userId") Long userId,
             @PathVariable("eventId") Long eventId) {
         log.info("Update eventId {} by userId {}, by dto {}", eventId, userId, dto);
 
         if (dto.getEventDate() != null) {
-            var date = LocalDateTime.parse(dto.getEventDate(), DateTimeFormatter.ofPattern(DATE_FORMAT));
+            var date = LocalDateTime.parse(dto.getEventDate(), FORMATTER);
             if (date.isBefore(LocalDateTime.now().plusHours(2))) {
                 throw new BadRequestException("impossible to update event");
             }
@@ -78,8 +77,9 @@ public class UserEventsController {
 
     @PostMapping(consumes = "application/json")
     @ResponseStatus(HttpStatus.CREATED)
-    public ResponseEntity<EventFullDto> add(@Valid @RequestBody NewEventDto dto,
-                                            @PathVariable("userId") Long userId) {
+    public ResponseEntity<EventFullDto> add(
+            @Valid @RequestBody NewEventDto dto,
+            @PathVariable("userId") Long userId) {
         log.info("New event registration {}", dto);
         var savedEvent = eventService.add(dto, userId);
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()

@@ -15,7 +15,6 @@ import java.util.Set;
 public class UpdateCompilationRequest {
     private Set<Long> events;
     private Boolean pinned;
-//    @NotBlank(message = "title field should not be empty")
     @Size(min = 1, max = 50, message = "title field should be min 1, max 50")
     private String title;
 }

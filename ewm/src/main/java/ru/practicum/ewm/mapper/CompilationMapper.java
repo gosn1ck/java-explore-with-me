@@ -14,7 +14,7 @@ import static org.mapstruct.NullValuePropertyMappingStrategy.IGNORE;
 @Mapper(componentModel = "spring", nullValuePropertyMappingStrategy = IGNORE, uses = {EventService.class})
 public interface CompilationMapper {
 
-    @Mapping(target = "pinned", source="pinned", defaultValue = "false")
+    @Mapping(target = "pinned", source = "pinned", defaultValue = "false")
     Compilation dtoToEntity(NewCompilationDto dto);
 
     void updateEntity(@MappingTarget Compilation entity, UpdateCompilationRequest dto);
