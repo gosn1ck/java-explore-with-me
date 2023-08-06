@@ -209,7 +209,7 @@ public class EventService {
         var response = statsClient.getStats(
                 LocalDateTime.now().minusDays(1),
                 LocalDateTime.now().plusDays(1),
-                List.of(uri), false);
+                List.of(uri), true);
         return response.getBody().stream().filter(r -> r.getUri().equals(uri)).findFirst().get().getHits();
     }
 
