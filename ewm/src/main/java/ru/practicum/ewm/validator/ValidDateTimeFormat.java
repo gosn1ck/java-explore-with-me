@@ -1,14 +1,15 @@
-package ru.practicum.stats.validator;
+package ru.practicum.ewm.validator;
 
 import javax.validation.Constraint;
 import javax.validation.Payload;
-import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-@Target(ElementType.FIELD)
-@Retention(RetentionPolicy.RUNTIME)
+import static java.lang.annotation.ElementType.FIELD;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
+
+@Target(FIELD)
+@Retention(RUNTIME)
 @Constraint(validatedBy = DateTimeFormatValidator.class)
 public @interface ValidDateTimeFormat {
     String message() default "Date Format is not valid. Format should be \"yyyy-MM-dd HH:mm:ss\"";
