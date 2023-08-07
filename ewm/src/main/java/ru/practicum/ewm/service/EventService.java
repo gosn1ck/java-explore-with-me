@@ -46,7 +46,6 @@ public class EventService {
     private final HitClient hitClient;
     private final StatsClient statsClient;
 
-    @Transactional(readOnly = true)
     public List<Event> getAllByInitiator(Long userId, Integer from, Integer size) {
         var page = PageRequest.of(from / size, size);
         return eventRepository.findAllByInitiatorId(userId, page);

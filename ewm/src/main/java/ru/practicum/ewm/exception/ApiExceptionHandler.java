@@ -77,4 +77,11 @@ public class ApiExceptionHandler {
         return new ResponseEntity<>(exception, BAD_REQUEST);
     }
 
+    @ExceptionHandler(value = Exception.class)
+    public ResponseEntity<ApiException> handleException(Exception e) {
+        log.error(e.getMessage(), e);
+        ApiException exception = new ApiException(INTERNAL_SERVER_ERROR, e.getMessage(), ZonedDateTime.now());
+        return new ResponseEntity<>(exception, INTERNAL_SERVER_ERROR);
+    }
+
 }
