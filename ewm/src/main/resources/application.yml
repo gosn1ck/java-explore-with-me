@@ -10,9 +10,12 @@ spring:
   application:
     name: ewm
   datasource:
-    username: ${SPRING_DATASOURCE_USERNAME}
-    password: ${SPRING_DATASOURCE_PASSWORD}
-    url: ${SPRING_DATASOURCE_URL}
+      username: ewm
+      password: ewm
+      url: jdbc:postgresql://localhost:5432/ewm
+#    username: ${SPRING_DATASOURCE_USERNAME}
+#    password: ${SPRING_DATASOURCE_PASSWORD}
+#    url: ${SPRING_DATASOURCE_URL}
   jpa:
     show-sql: true
     properties:
@@ -20,4 +23,5 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
     hibernate:
-      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO}
+#      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO}
+      ddl-auto: update

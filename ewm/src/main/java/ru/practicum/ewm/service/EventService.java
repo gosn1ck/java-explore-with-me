@@ -22,10 +22,7 @@ import ru.practicum.stats.dto.HitDto;
 
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static ru.practicum.ewm.model.EventSorts.VIEWS;
