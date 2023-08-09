@@ -14,32 +14,30 @@ import static javax.persistence.FetchType.LAZY;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name = "comments")
-public class Comment {
+@Table(name = "comment_likes")
+public class CommentLike {
 
     @Id
     @SequenceGenerator(
-            name = "comment_id_sequence",
-            sequenceName = "comment_id_sequence"
+            name = "comment_like_id_sequence",
+            sequenceName = "comment_like_id_sequence"
     )
     @GeneratedValue(
             strategy = GenerationType.IDENTITY,
-            generator = "comment_id_sequence"
+            generator = "comment_like_id_sequence"
     )
     @Column(name = "id", updatable = false)
     private Long id;
-    @Column(name = "text", nullable = false, length = 5000)
-    private String text;
     @Column(name = "created", nullable = false)
     private LocalDateTime created = LocalDateTime.now();
     @ManyToOne(fetch = LAZY, cascade = ALL)
-    @JoinColumn(name = "event_id", referencedColumnName = "id", nullable = false)
-    private Event event;
+    @JoinColumn(name = "comment_id", referencedColumnName = "id", nullable = false)
+    private Comment comment;
     @ManyToOne(fetch = LAZY, cascade = ALL)
     @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
     private User user;
     @Enumerated(EnumType.STRING)
-    @Column(name = "state")
-    private CommentState state;
+    @Column(name = "type")
+    private LikeType type;
 
 }

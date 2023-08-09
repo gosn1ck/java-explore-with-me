@@ -3,16 +3,15 @@ package ru.practicum.ewm.dto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import ru.practicum.ewm.model.CommentState;
+import ru.practicum.ewm.model.LikeType;
 
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
-public class CommentResponse {
+@NoArgsConstructor
+public class CommentLikeResponse {
     private Long id;
-    private String text;
     private String created;
-    private CommentState state;
+    private LikeType type;
+    private Long comment;
     private Long user;
-    private Long event;
 }
