@@ -14,4 +14,8 @@ public class ClientErrorException extends RuntimeException {
         super(String.format(message, id));
     }
 
+    public ClientErrorException(String message, Long firstId, Long secondId) {
+        super(String.format(message, firstId, secondId));
+    }
+
 }

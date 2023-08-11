@@ -6,11 +6,14 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import ru.practicum.ewm.dto.CommentResponse;
 import ru.practicum.ewm.dto.EventFullDto;
 import ru.practicum.ewm.dto.EventShortDto;
 import ru.practicum.ewm.exception.BadRequestException;
+import ru.practicum.ewm.mapper.CommentMapper;
 import ru.practicum.ewm.mapper.EventMapper;
 import ru.practicum.ewm.model.EventSorts;
+import ru.practicum.ewm.service.CommentService;
 import ru.practicum.ewm.service.EventService;
 import ru.practicum.ewm.service.RequestService;
 
@@ -32,7 +35,9 @@ public class EventController {
 
     private final EventService eventService;
     private final RequestService requestService;
+    private final CommentService commentService;
     private final EventMapper eventMapper;
+    private final CommentMapper commentMapper;
     private final HttpServletRequest request;
 
     @GetMapping
@@ -73,7 +78,26 @@ public class EventController {
         var fullDto = eventMapper.entityToEventFullDto(event);
         fullDto.setConfirmedRequests(requestService.requestsByEvent(event));
         fullDto.setViews(eventService.getViews(event.getId()));
+        fullDto.setComments(
+                commentService.findAllByEventId(id)
+                        .stream()
+                        .map(commentMapper::entityToShortResponse)
+                        .map(commentService::findLikes)
+                        .collect(Collectors.toList()));
         return ResponseEntity.ok(fullDto);
+    }
+
+    @GetMapping("/{id}/comments")
+    public ResponseEntity<List<CommentResponse>> getComments(
+            @PathVariable("id") Long id,
+            @RequestParam(defaultValue = "0")
+            @Min(value = 0, message = "minimum value for from param is 0") Integer from,
+            @RequestParam(defaultValue = "10")
+            @Min(value = 1, message = "minimum value for size param is 1") Integer size) {
+        log.info("Get comments to event id {}, from {}, size {}", id, from, size);
+        var comments = commentService.findAllByEventId(id, from, size);
+        return ResponseEntity.ok(
+                comments.stream().map(commentMapper::entityToResponse).collect(Collectors.toList()));
     }
 
 }

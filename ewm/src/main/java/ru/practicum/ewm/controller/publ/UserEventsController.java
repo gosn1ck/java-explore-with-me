@@ -8,8 +8,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import ru.practicum.ewm.dto.*;
 import ru.practicum.ewm.exception.BadRequestException;
+import ru.practicum.ewm.mapper.CommentMapper;
 import ru.practicum.ewm.mapper.EventMapper;
 import ru.practicum.ewm.mapper.RequestMapper;
+import ru.practicum.ewm.service.CommentService;
 import ru.practicum.ewm.service.EventService;
 import ru.practicum.ewm.service.RequestService;
 
@@ -17,6 +19,7 @@ import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import java.net.URI;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -30,8 +33,10 @@ public class UserEventsController {
 
     private final EventService eventService;
     private final RequestService requestService;
+    private final CommentService commentService;
     private final EventMapper eventMapper;
     private final RequestMapper requestMapper;
+    private final CommentMapper commentMapper;
 
     @GetMapping
     public ResponseEntity<List<EventShortDto>> getAll(
@@ -72,6 +77,12 @@ public class UserEventsController {
         var event = eventService.update(eventId, userId, dto);
         var fullDto = eventMapper.entityToEventFullDto(event);
         fullDto.setConfirmedRequests(requestService.requestsByEvent(event));
+        fullDto.setComments(
+                commentService.findAllByEventId(eventId)
+                        .stream()
+                        .map(commentMapper::entityToShortResponse)
+                        .map(commentService::findLikes)
+                        .collect(Collectors.toList()));
         return ResponseEntity.ok(fullDto);
     }
 
@@ -88,6 +99,7 @@ public class UserEventsController {
         var eventFullDto = eventMapper.entityToEventFullDto(savedEvent);
         eventFullDto.setViews(0);
         eventFullDto.setConfirmedRequests(0);
+        eventFullDto.setComments(new ArrayList<>());
         return ResponseEntity.created(location).body(eventFullDto);
     }
 
@@ -108,6 +120,41 @@ public class UserEventsController {
             @RequestBody EventRequestStatusUpdateRequest dto) {
         log.info("Update status participation request user id {}, event id {}, dto {}", userId, eventId, dto);
         return ResponseEntity.ok(eventService.updateParticipationRequest(userId, eventId, dto));
+    }
+
+    @PostMapping("/{eventId}/comments")
+    @ResponseStatus(HttpStatus.CREATED)
+    public ResponseEntity<CommentResponse> addComment(
+            @PathVariable("userId") Long userId,
+            @PathVariable("eventId") Long eventId,
+            @Valid @RequestBody CommentDto dto) {
+        log.info("New comment registration {}, from userId {} to eventId {}", dto, userId, eventId);
+        var savedComment = commentService.add(dto, userId, eventId);
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(savedComment.getId()).toUri();
+        return ResponseEntity.created(location).body(commentMapper.entityToResponse(savedComment));
+    }
+
+    @PatchMapping("/{eventId}/comments/{commentId}")
+    public ResponseEntity<CommentResponse> updateComment(
+            @PathVariable("userId") Long userId,
+            @PathVariable("eventId") Long eventId,
+            @PathVariable("commentId") Long commentId,
+            @Valid @RequestBody CommentDto dto) {
+        log.info("Update comment id {}, from userId {} to eventId {}, with dto {}", commentId, userId, eventId, dto);
+        var comment = commentService.update(dto, userId, eventId, commentId);
+        return ResponseEntity.ok(commentMapper.entityToResponse(comment));
+    }
+
+    @GetMapping("/{eventId}/comments/{commentId}")
+    public ResponseEntity<CommentResponse> getComment(
+            @PathVariable("userId") Long userId,
+            @PathVariable("eventId") Long eventId,
+            @PathVariable("commentId") Long commentId) {
+        log.info("Get userId {} eventId {} commentId {}", userId, eventId, commentId);
+        var comment = commentService.findCommentById(userId, eventId, commentId);
+        return ResponseEntity.ok(commentMapper.entityToResponse(comment));
     }
 
 }
